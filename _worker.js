@@ -60,28 +60,22 @@ async function 整理优选列表(api) {
 		}).then(response => response.ok ? response.text() : Promise.reject())));
 
 		for (const [index, response] of responses.entries()) {
-			if (response.status === 'fulfilled') {
-				newapi += response.value + "\n";
-			}
+			if (response.status === 'fulfilled') newapi += response.value + "\n";
 		}
 
-		// --- 随机抽取逻辑：最简单且强制生效 ---
+		// --- 核心改动：在这里直接把事情办了 ---
 		let lines = newapi.split('\n').filter(line => line.trim() !== "" && line.includes(':')); 
-		
-		// 1. 随机打乱
+		// 1. 随机打乱 IP 顺序
 		lines.sort(() => Math.random() - 0.5); 
-		
-		// 2. 强制只取 60 个（你可以把 60 改成任何你想要的数字）
-		// 这里不用 total 变量，防止被代码后半部分的 Bug 干扰
-		newapi = lines.slice(0, 300).join('\n'); 
-		// --- 随机抽取逻辑结束 ---
+		// 2. 强制只取 60 个 IP（你想要多少就改这个数字）
+		newapi = lines.slice(0, 60).join('\n'); 
+		// ------------------------------------
 
 	} catch (e) {
 		console.error(e);
 	} finally {
 		clearTimeout(timeout);
 	}
-
 	return newapi;
 }
 
@@ -917,7 +911,7 @@ export default {
 		fakeUserID = fakeUserIDMD5.slice(0, 8) + "-" + fakeUserIDMD5.slice(8, 12) + "-" + fakeUserIDMD5.slice(12, 16) + "-" + fakeUserIDMD5.slice(16, 20) + "-" + fakeUserIDMD5.slice(20);
 		fakeHostName = fakeUserIDMD5.slice(6, 9) + "." + fakeUserIDMD5.slice(13, 19) + ".xyz";
 
-		total = total * 1099511627776;
+		//total = total * 1099511627776;
 		let expire = Math.floor(timestamp / 1000);
 
 		link = env.LINK || link;
