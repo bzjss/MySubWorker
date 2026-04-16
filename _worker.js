@@ -73,7 +73,7 @@ async function 整理优选列表(api) {
 		
 		// 2. 强制只取 60 个（你可以把 60 改成任何你想要的数字）
 		// 这里不用 total 变量，防止被代码后半部分的 Bug 干扰
-		newapi = lines.slice(0, 24).join('\n'); 
+		newapi = lines.slice(0, 60).join('\n'); 
 		// --- 随机抽取逻辑结束 ---
 
 	} catch (e) {
