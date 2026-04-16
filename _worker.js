@@ -962,7 +962,7 @@ export default {
 		fakeUserID = fakeUserIDMD5.slice(0, 8) + "-" + fakeUserIDMD5.slice(8, 12) + "-" + fakeUserIDMD5.slice(12, 16) + "-" + fakeUserIDMD5.slice(16, 20) + "-" + fakeUserIDMD5.slice(20);
 		fakeHostName = fakeUserIDMD5.slice(6, 9) + "." + fakeUserIDMD5.slice(13, 19) + ".xyz";
 
-		total = total * 1099511627776;
+		//total = total * 1099511627776;
 		let expire = Math.floor(timestamp / 1000);
 
 		link = env.LINK || link;
