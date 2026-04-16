@@ -48,35 +48,86 @@ let 加密方式 = 'auto';
 let 网站图标, 网站头像, 网站背景, xhttp = '';
 async function 整理优选列表(api) {
 	if (!api || api.length === 0) return [];
+
 	let newapi = "";
+
+	// 创建一个AbortController对象，用于控制fetch请求的取消
 	const controller = new AbortController();
-	const timeout = setTimeout(() => { controller.abort(); }, 2000);
+
+	const timeout = setTimeout(() => {
+		controller.abort(); // 取消所有请求
+	}, 2000); // 2秒后触发
 
 	try {
+		// 使用Promise.allSettled等待所有API请求完成，无论成功或失败
+		// 对api数组进行遍历，对每个API地址发起fetch请求
 		const responses = await Promise.allSettled(api.map(apiUrl => fetch(apiUrl, {
 			method: 'get',
-			headers: { 'Accept': 'text/html,application/xhtml+xml,application/xml;', 'User-Agent': FileName },
-			signal: controller.signal
+			headers: {
+				'Accept': 'text/html,application/xhtml+xml,application/xml;',
+				'User-Agent': FileName + atob('IChodHRwczovL2dpdGh1Yi5jb20vY21saXUvV29ya2VyVmxlc3Myc3ViKQ==')
+			},
+			signal: controller.signal // 将AbortController的信号量添加到fetch请求中，以便于需要时可以取消请求
 		}).then(response => response.ok ? response.text() : Promise.reject())));
 
+		// 遍历所有响应
 		for (const [index, response] of responses.entries()) {
-			if (response.status === 'fulfilled') newapi += response.value + "\n";
+			// 检查响应状态是否为'fulfilled'，即请求成功完成
+			if (response.status === 'fulfilled') {
+				// 获取响应的内容
+				const content = await response.value;
+
+				const lines = content.split(/\r?\n/);
+				let 节点备注 = '';
+				let 测速端口 = '443';
+
+				if (lines[0].split(',').length > 3) {
+					const idMatch = api[index].match(/id=([^&]*)/);
+					if (idMatch) 节点备注 = idMatch[1];
+
+					const portMatch = api[index].match(/port=([^&]*)/);
+					if (portMatch) 测速端口 = portMatch[1];
+
+					for (let i = 1; i < lines.length; i++) {
+						const columns = lines[i].split(',')[0];
+						if (columns) {
+							newapi += `${columns}:${测速端口}${节点备注 ? `#${节点备注}` : ''}\n`;
+							if (api[index].includes('proxyip=true')) proxyIPPool.push(`${columns}:${测速端口}`);
+						}
+					}
+				} else {
+					// 验证当前apiUrl是否带有'proxyip=true'
+					if (api[index].includes('proxyip=true')) {
+						// 如果URL带有'proxyip=true'，则将内容添加到proxyIPPool
+						proxyIPPool = proxyIPPool.concat((await 整理(content)).map(item => {
+							const baseItem = item.split('#')[0] || item;
+							if (baseItem.includes(':')) {
+								const port = baseItem.split(':')[1];
+								if (!httpsPorts.includes(port)) {
+									return baseItem;
+								}
+							} else {
+								return `${baseItem}:443`;
+							}
+							return null; // 不符合条件时返回 null
+						}).filter(Boolean)); // 过滤掉 null 值
+					}
+					// 将内容添加到newapi中
+					newapi += content + '\n';
+				}
+			}
 		}
-
-		// --- 核心改动：在这里直接把事情办了 ---
-		let lines = newapi.split('\n').filter(line => line.trim() !== "" && line.includes(':')); 
-		// 1. 随机打乱 IP 顺序
-		lines.sort(() => Math.random() - 0.5); 
-		// 2. 强制只取 60 个 IP（你想要多少就改这个数字）
-		newapi = lines.slice(0, 60).join('\n'); 
-		// ------------------------------------
-
-	} catch (e) {
-		console.error(e);
+	} catch (error) {
+		console.error(error);
 	} finally {
+		// 无论成功或失败，最后都清除设置的超时定时器
 		clearTimeout(timeout);
 	}
-	return newapi;
+
+	const newAddressesapi = await 整理(newapi);
+
+	// 返回处理后的结果
+	return newAddressesapi;
 }
 
 async function 整理测速结果(tls) {
@@ -911,7 +962,7 @@ export default {
 		fakeUserID = fakeUserIDMD5.slice(0, 8) + "-" + fakeUserIDMD5.slice(8, 12) + "-" + fakeUserIDMD5.slice(12, 16) + "-" + fakeUserIDMD5.slice(16, 20) + "-" + fakeUserIDMD5.slice(20);
 		fakeHostName = fakeUserIDMD5.slice(6, 9) + "." + fakeUserIDMD5.slice(13, 19) + ".xyz";
 
-		//total = total * 1099511627776;
+		total = total * 1099511627776;
 		let expire = Math.floor(timestamp / 1000);
 
 		link = env.LINK || link;
